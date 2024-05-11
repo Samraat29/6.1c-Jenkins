@@ -1,79 +1,60 @@
 pipeline {
-    agent any  // Designates any available agent to run the pipeline
+    agent any
 
     stages {
-        stage('Code Compilation') {
+        stage('Compile') {
             steps {
-                echo "Retrieving source code based on SCM configuration."
-                echo "Executing build process to compile source files and create deployable artifacts."
-                sh 'mvn clean package'  // Replace with your build system command, e.g., for Maven
+                echo "Retrieving source code based on the specified directory path in environment variables."
+                echo "Compiling the source code to produce the required executables and artifacts."
             }
         }
 
-        stage('Testing Phase') {
+        stage('Testing') {
             steps {
-                echo "Initiating unit tests to validate individual components."
-                echo "Conducting integration tests to ensure components interact correctly."
-                sh 'mvn test'  // Use appropriate test command for your setup
+                echo "Executing unit tests to validate individual parts of the code."
+                echo "Performing integration tests to ensure various components function together properly."
             }
         }
 
         stage('Quality Check') {
             steps {
-                echo "Performing code quality analysis to adhere to quality standards."
-                sh 'mvn sonar:sonar'  // Assumes SonarQube integration; modify as needed
+                echo "Conducting code quality analysis using a static analysis tool to ensure best practices."
             }
         }
 
-        stage('Vulnerability Audit') {
+        stage('Vulnerability Scan') {
             steps {
-                echo "Running security vulnerability scans to detect potential risks."
-                sh 'mvn dependency-check:check'  // Example for Maven with OWASP
+                echo "Scanning the code to detect security vulnerabilities with a specified security tool."
             }
         }
 
-        stage('Staging Deployment') {
+        stage('Staging Tests') {
             steps {
-                echo "Deploying application to staging area for pre-production testing."
-                // Add deployment command here, e.g., rsync or another secure method
+                echo "Conducting further integration tests in a staging environment to simulate production conditions."
             }
         }
 
-        stage('Staging Testing') {
+        stage('Production Deployment') {
             steps {
-                echo "Executing tests in staging to simulate the production environment."
-                // Script for running tests on your staging server
-            }
-        }
-
-        stage('Live Deployment') {
-            steps {
-                echo "Final deployment to the live production server."
-                // Deployment command for production, ensure security and accuracy
+                echo "Deploying the final version of the code to the production server."
             }
         }
     }
 
     post {
         success {
-            emailext(
-                to: 'Samraat10052024@gmail.com',
-                subject: 'Deployment Complete - Success',
-                body: """<p>Deployment to the production environment completed successfully.</p>
-                         <p>Details and logs are available here: ${env.BUILD_URL}</p>""",
-                attachLog: true,
-                compressLog: true
-            )
+            emailext attachLog: true,
+            compressLog: true,
+            to: 'Samraat10052024@gmail.com',
+            body: 'A detailed execution log is available at $JENKINS_HOME/jobs/$JOB_NAME/builds/lastSuccessfulBuild/log',
+            subject: 'Successful Deployment to Production - Jenkins Pipeline'
         }
-        failure {
-            emailext(
-                to: 'Samraat10052024@gmail.com',
-                subject: 'Deployment Alert - Failure',
-                body: """<p>Deployment to production encountered issues and failed.</p>
-                         <p>For detailed error information, please review: ${env.BUILD_URL}</p>""",
-                attachLog: true,
-                compressLog: true
-            )
+        failure {  
+            emailext attachLog: true,
+            compressLog: true,
+            to: 'Samraat10052024@gmail.com',
+            body: 'Please review the execution log at $JENKINS_HOME/jobs/$JOB_NAME/builds/lastSuccessfulBuild/log for details.',
+            subject: 'Failed Deployment to Production - Jenkins Pipeline'  
         }
     }
 }
